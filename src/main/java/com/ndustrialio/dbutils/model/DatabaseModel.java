@@ -166,7 +166,7 @@ public class DatabaseModel
                     .columnDefinitions(_columns);
 
 
-        _dbClient.executeStatement(createTableStatement, false);
+        _dbClient.executeStatement(createTableStatement);
 
 
     }
@@ -182,7 +182,7 @@ public class DatabaseModel
 
 
             // Construct and execute CREATE INDEX statement
-            _dbClient.executeStatement(createIndexStatement, false);
+            _dbClient.executeStatement(createIndexStatement);
         }
 
         return this;

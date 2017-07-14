@@ -14,8 +14,6 @@ import java.util.Map;
 public abstract class JDBCClient extends BaseConfiguredComponent
 {
 
-    public static final int RECONNECT_ATTEMPTS = 5;
-
     public static final int INITIAL_CONNETIONS = 5;
 
     public static final int MAX_CONNECTIONS = 50;
@@ -106,32 +104,18 @@ public abstract class JDBCClient extends BaseConfiguredComponent
     private QueryResponse executeImpl(StatementPreparer preparer) throws SQLException
     {
 
-        Connection conn = null;
-        ResultSet rs = null;
+        Connection conn = _dataSource.getConnection();
 
-        try
+        conn.setAutoCommit(_autoCommit);
+
+        PreparedStatement statement = preparer.prepareStatement(conn);
+
+        if (statement.execute())
         {
-            conn = _dataSource.getConnection();
-
-            conn.setAutoCommit(_autoCommit);
-
-            PreparedStatement statement = preparer.prepareStatement(conn);
-
-            if (statement.execute())
-            {
-                return new QueryResponse(conn, statement, statement.getResultSet());
-            } else
-            {
-                return new QueryResponse(conn, statement, statement.getGeneratedKeys());
-            }
-
-        } finally
+            return new QueryResponse(conn, statement, statement.getResultSet());
+        } else
         {
-            // At least make sure we return the connection to the pool.
-            if (conn != null)
-            {
-                conn.close();
-            }
+            return new QueryResponse(conn, statement, statement.getGeneratedKeys());
         }
 
     }
@@ -139,119 +123,17 @@ public abstract class JDBCClient extends BaseConfiguredComponent
     /**
      * Executes a statement
      *
-     * @param query      String statement, probably unsafe
-     * @param returnKeys true to return generated keys
-     * @return Resposne from dbutils
-     * @throws SQLException
-     */
-    public QueryResponse executeStatement(final String query, final boolean returnKeys) throws SQLException
-    {
-        return executeImpl((conn) ->
-        {
-            if (returnKeys)
-            {
-                return conn.prepareStatement(query, java.sql.Statement.RETURN_GENERATED_KEYS);
-            } else
-            {
-                return conn.prepareStatement(query);
-            }
-        });
-    }
-
-    /**
-     * Executes a statement
-     *
-     * @param query      String statement
-     * @param arguments  Arguments to be inserted into the prepared statement
-     * @param returnKeys true to return generated keys
-     * @return Resposne from dbutils
-     * @throws SQLException
-     */
-    public QueryResponse executeStatement(final String query, final List<Object> arguments, final boolean returnKeys) throws SQLException
-    {
-
-        return executeImpl((conn) ->
-        {
-
-            PreparedStatement statement;
-
-            if (returnKeys)
-            {
-                statement = conn.prepareStatement(query, java.sql.Statement.RETURN_GENERATED_KEYS);
-            } else
-            {
-                statement = conn.prepareStatement(query);
-            }
-
-
-            int i = 1;
-
-            for (Object arg : arguments)
-            {
-                if (arg == null)
-                {
-                    statement.setNull(i, Types.NULL);
-                } else
-                {
-                    statement.setObject(i, arg);
-                }
-
-                i++;
-            }
-
-            return statement;
-        });
-    }
-
-    /**
-     * Executes a statement, returning any generated keysx`
-     *
-     * @param query String statement, probably unsafe
-     * @return Response from dbutils
-     * @throws SQLException
-     */
-    public QueryResponse executeStatement(final String query) throws SQLException
-    {
-        return executeStatement(query, true);
-    }
-
-    /**
-     * Executes a statement
-     *
-     * @param query     String statement
-     * @param arguments Arguments to be inserted into the prepared statement
-     * @return Response from dbutils
-     * @throws SQLException
-     */
-    public QueryResponse executeStatement(final String query, final List<Object> arguments) throws SQLException
-    {
-        return executeStatement(query, arguments, false);
-    }
-
-
-    /**
-     * Executes a statement
-     *
      * @param statement  Statement object
-     * @param returnKeys true to return generated keys
      * @return Resposne from dbutils
      * @throws SQLException
      */
-    public QueryResponse executeStatement(final Statement statement, final boolean returnKeys) throws SQLException
+    public QueryResponse executeStatement(final Statement statement) throws SQLException
     {
 
         return executeImpl((conn) ->
         {
 
-            PreparedStatement preparedStatement;
-
-            if (returnKeys)
-            {
-                preparedStatement = conn.prepareStatement(statement.toString(), java.sql.Statement.RETURN_GENERATED_KEYS);
-            } else
-            {
-                preparedStatement = conn.prepareStatement(statement.toString());
-            }
+            PreparedStatement preparedStatement = conn.prepareStatement(statement.toString());
 
             statement.setArguments(preparedStatement);
 
@@ -260,16 +142,57 @@ public abstract class JDBCClient extends BaseConfiguredComponent
     }
 
     /**
-     * Executes a statement, returning any generated keys
+     * Executes a statement
      *
-     * @param statement Statement object
-     * @return Response from dbutils
+     * @param statement String statement, probably unsafe
+     * @return Resposne from dbutils
      * @throws SQLException
      */
-    public QueryResponse executeStatement(final Statement statement) throws SQLException
+    public QueryResponse executeStatement(final String statement) throws SQLException
     {
-        return executeStatement(statement, true);
+        return executeImpl((conn) ->
+        {
+            return conn.prepareStatement(statement);
+        });
     }
+
+    /**
+     * Executes a statement
+     *
+     * @param statement  String statement
+     * @param arguments  Arguments to be inserted into the prepared statement
+     * @return Resposne from dbutils
+     * @throws SQLException
+     */
+    public QueryResponse executeStatement(final String statement, final List<Object> arguments) throws SQLException
+    {
+
+        return executeImpl((conn) ->
+        {
+            PreparedStatement ps;
+
+            ps = conn.prepareStatement(statement);
+
+            int i = 1;
+
+            for (Object arg : arguments)
+            {
+                if (arg == null)
+                {
+                    ps.setNull(i, Types.NULL);
+                } else
+                {
+                    ps.setObject(i, arg);
+                }
+
+                i++;
+            }
+
+            return ps;
+        });
+    }
+
+
 
 
 }

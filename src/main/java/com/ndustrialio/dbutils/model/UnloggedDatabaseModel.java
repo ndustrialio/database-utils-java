@@ -26,7 +26,7 @@ public class UnloggedDatabaseModel extends DatabaseModel
                         .unLogged(true);
 
 
-        _dbClient.executeStatement(createTableStatement, false);
+        _dbClient.executeStatement(createTableStatement);
 
     }
 

@@ -16,7 +16,7 @@ public class QueryResponse implements AutoCloseable
 
     public QueryResponse(Connection conn, Statement statement, ResultSet results)
     {
-        connection = conn;
+        this.connection = conn;
         this.statement = statement;
         this.results = results;
     }
@@ -24,6 +24,11 @@ public class QueryResponse implements AutoCloseable
     public ResultSet getResults()
     {
         return results;
+    }
+
+    public void commit() throws SQLException
+    {
+        this.connection.commit();
     }
 
     @Override
