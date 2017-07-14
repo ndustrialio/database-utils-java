@@ -19,21 +19,7 @@ public class PostgresClientTest
     @Before
     public void setup() throws SQLException
     {
-        Map<String, Object> conf = new HashMap<String, Object>()
-        {
-            {
-                put("postgres_host", "localhost");
-                put("postgres_port", "5432");
-                put("postgres_user", "test");
-                put("postgres_pass", "test");
-                put("postgres_database", "test");
-
-
-            }
-
-        };
-
-        _postgres = new PostgresClient(conf, JDBCClient.CONNECTION_TYPE.SIMPLE, false);
+        _postgres = DatabaseTesting.getLocalPostgres(false);
 
         try (QueryResponse response = _postgres.executeStatement("CREATE TABLE IF NOT EXISTS test (one varchar, two varchar, three varchar)"))
         {

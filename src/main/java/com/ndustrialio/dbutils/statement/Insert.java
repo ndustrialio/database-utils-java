@@ -1,9 +1,6 @@
 package com.ndustrialio.dbutils.statement;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by jmhunt on 5/31/16.
@@ -11,6 +8,8 @@ import java.util.Map;
 public class Insert extends Statement
 {
     protected Map<String, String> _castTypes;
+
+    protected Optional<String> _returning;
 
     public Insert(String tableName)
     {
@@ -40,6 +39,13 @@ public class Insert extends Statement
     public Insert cast(String column, String castType)
     {
         _castTypes.put(column, castType);
+
+        return this;
+    }
+
+    public Insert returning(String column)
+    {
+        _returning = Optional.of("RETURNING " + column);
 
         return this;
     }
@@ -89,6 +95,10 @@ public class Insert extends Statement
 
 
         queryChunks.add(stringJoin(",", insertRows));
+
+        // RETURNING clause
+        _returning.ifPresent((rt)->queryChunks.add(rt));
+
 
         return stringJoin(" ", queryChunks);
 
