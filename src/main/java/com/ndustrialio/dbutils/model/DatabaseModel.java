@@ -81,7 +81,7 @@ public class DatabaseModel
 
         if (!_columnMap.containsKey("id"))
         {
-            throw new RuntimeException("com.ndustrialio.dbutils.model.DatabaseModel must be used with schemas having an 'id' com.ndustrialio.dbutils.model!");
+            throw new RuntimeException("DatabaseModel must be used with schemas having an 'id'!");
         }
 
         _tableName = tableName;
@@ -127,7 +127,7 @@ public class DatabaseModel
 
 
         // INSERT
-        _insertStatement = new Insert(_tableName)
+        _insertStatement = new Insert(_tableName).returning("id")
                 .columns(_insertValues);
 
         // UPDATE
@@ -150,6 +150,7 @@ public class DatabaseModel
             _upsertStatement = new Upsert(_tableName)
                     .onConflict(_primaryIdentifiers)
                     .update(_updateValues, "?")
+                    .returning("id")
                     .columns(_insertValues);
         }
 
