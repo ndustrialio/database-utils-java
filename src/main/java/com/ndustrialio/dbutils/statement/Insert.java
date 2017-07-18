@@ -9,7 +9,7 @@ public class Insert extends Statement
 {
     protected Map<String, String> _castTypes;
 
-    protected Optional<String> _returning;
+    protected String _returning;
 
     public Insert(String tableName)
     {
@@ -45,7 +45,7 @@ public class Insert extends Statement
 
     public Insert returning(String column)
     {
-        _returning = Optional.of("RETURNING " + column);
+        _returning = "RETURNING " + column;
 
         return this;
     }
@@ -97,7 +97,7 @@ public class Insert extends Statement
         queryChunks.add(stringJoin(",", insertRows));
 
         // RETURNING clause
-        _returning.ifPresent((rt)->queryChunks.add(rt));
+        Optional.ofNullable(_returning).ifPresent((rt)->queryChunks.add(rt));
 
 
         return stringJoin(" ", queryChunks);
