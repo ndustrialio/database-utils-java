@@ -13,7 +13,7 @@ public class CassandraUtility extends BaseConfiguredComponent
 	private static Cluster CLUSTER = null;
 	private static Session SESSION = null;
 
-	private static Session getSession(String host, String keyspace)
+	private static Session getSession(String host)
 	{
         if (SESSION == null)
         {
@@ -63,11 +63,18 @@ public class CassandraUtility extends BaseConfiguredComponent
 		this.setConf(conf);
 		
 		String host = (String) this.getConfigurationValue("cassandra_host");
-		_keySpace = (String) this.getConfigurationValue("cassandra_keyspace");
 
-		_session = CassandraUtility.getSession(host, _keySpace);
+		try
+		{
+			_keySpace = (String) this.getConfigurationValue("cassandra_keyspace");
 
-    }
+
+		} catch (RuntimeException e) {}
+
+		_session = CassandraUtility.getSession(host);
+
+
+	}
 
 
 
